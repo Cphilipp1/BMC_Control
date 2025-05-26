@@ -1,4 +1,4 @@
-const API_URL = 'https://cimlgm4ovj.execute-api.us-east-2.amazonaws.com/USE_CURRENT';
+const API_URL = 'arn:aws:execute-api:us-east-2:710146770470:cimlgm4ovj/*/OPTIONS/minecraft';
 
 async function makeRequest(action) {
     try {
