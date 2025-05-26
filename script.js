@@ -1,6 +1,6 @@
 const API_URL = 'https://cimlgm4ovj.execute-api.us-east-2.amazonaws.com/USE_CURRENT/minecraft';
 
-let autoRefreshInterval = null;
+let autoRefreshInterval = 3000;
 let serverStartTime = null;
 let lastKnownStatus = null;
 let activityHistory = JSON.parse(localStorage.getItem('mcServerHistory') || '[]');
