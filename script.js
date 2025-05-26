@@ -61,7 +61,6 @@ async function checkStatus() {
         updateMetrics(result);
         if (result.status === 'running' && lastKnownStatus !== 'running') {
             serverStartTime = new Date();
-            addToHistory('Online', 'Server came online');
         } else if (result.status === 'stopped' && lastKnownStatus === 'running') {
             serverStartTime = null;
             addToHistory('Offline', 'Server went offline');
