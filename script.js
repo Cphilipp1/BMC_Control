@@ -152,7 +152,7 @@ function updateMetrics(result) {
     
     // Update estimated cost (assuming t3.small by default)
     const costElement = document.getElementById('costValue');
-    const instanceType = result.instance_type || 't3.small';
+    const instanceType = result.instance_type || 'm5.xlarge';
     const hourlyCost = HOURLY_COSTS[instanceType] || HOURLY_COSTS['t3.small'];
     const dailyCost = (hourlyCost * 24).toFixed(2);
     costElement.textContent = result.status === 'running' ? `$${dailyCost}` : '$0.00';
