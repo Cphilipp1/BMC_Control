@@ -115,6 +115,7 @@ function updateMetrics(result) {
     costEl.textContent = result.status === 'running' ? `$${daily}` : '$0.00';
 
     document.getElementById('ipValue').textContent = result.public_ip || '--';
+    document.getElementById('joinAddress').textContent = result.public_ip ? `${result.public_ip}:25565` : '--';
 
     const lastActionEl = document.getElementById('lastActionValue');
     if (activityHistory.length > 0) {
