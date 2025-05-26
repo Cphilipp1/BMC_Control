@@ -1,12 +1,11 @@
 const API_URL = 'https://cimlgm4ovj.execute-api.us-east-2.amazonaws.com/USE_CURRENT/minecraft';
 
-let autoRefreshInterval = 3000;
+let autoRefreshInterval = null;
 let serverStartTime = null;
 let lastKnownStatus = null;
 let activityHistory = JSON.parse(localStorage.getItem('mcServerHistory') || '[]');
 let pendingAction = null;
 
-// Cost estimation (adjust based on your instance type)
 const HOURLY_COSTS = {
     't2.micro': 0.0116,
     't2.small': 0.023,
@@ -22,37 +21,26 @@ async function makeRequest(action) {
     try {
         const response = await fetch(API_URL, {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ action: action })
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action })
         });
-        
-        if (!response.ok) {
-            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-        }
-        
-        const data = await response.json();
-        return data;
+        if (!response.ok) throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        return await response.json();
     } catch (error) {
         console.error('Error:', error);
-        return { 
-            success: false, 
-            error: error.message || 'Network connection failed'
-        };
+        return { success: false, error: error.message || 'Network error' };
     }
 }
 
 async function startServer() {
     setLoading(true, 'start');
     const result = await makeRequest('start');
-    
     if (result.success) {
-        showMessage(result.message || 'Server start command sent!', 'success');
+        showMessage(result.message || 'Server starting...', 'success');
         addToHistory('Started', 'Server start initiated');
         setTimeout(checkStatus, 3000);
     } else {
-        showMessage(result.error || 'Failed to start server', 'error');
+        showMessage(result.error || 'Start failed', 'error');
     }
     setLoading(false, 'start');
 }
@@ -60,13 +48,12 @@ async function startServer() {
 async function stopServer() {
     setLoading(true, 'stop');
     const result = await makeRequest('stop');
-    
     if (result.success) {
-        showMessage(result.message || 'Server stop command sent!', 'success');
+        showMessage(result.message || 'Server stopping...', 'success');
         addToHistory('Stopped', 'Server stop initiated');
         setTimeout(checkStatus, 3000);
     } else {
-        showMessage(result.error || 'Failed to stop server', 'error');
+        showMessage(result.error || 'Stop failed', 'error');
     }
     setLoading(false, 'stop');
 }
@@ -74,125 +61,91 @@ async function stopServer() {
 async function checkStatus() {
     setLoading(true, 'refresh');
     const result = await makeRequest('status');
-    
     if (result.success) {
         updateStatusDisplay(result);
         updateMetrics(result);
-        
-        // Track server start time
+
         if (result.status === 'running' && lastKnownStatus !== 'running') {
             serverStartTime = new Date();
-            addToHistory('Online', 'Server came online');
+            addToHistory('Online', 'Server is now online');
         } else if (result.status === 'stopped' && lastKnownStatus === 'running') {
             serverStartTime = null;
-            addToHistory('Offline', 'Server went offline');
+            addToHistory('Offline', 'Server stopped');
         }
-        
+
         lastKnownStatus = result.status;
     } else {
-        document.getElementById('status').textContent = 'Error checking status';
-        document.getElementById('statusDetails').textContent = result.error || 'Unknown error';
-        showMessage(result.error || 'Failed to check server status', 'error');
+        document.getElementById('status').textContent = 'Error';
+        document.getElementById('statusDetails').textContent = result.error || 'Unknown';
+        showMessage(result.error || 'Status check failed', 'error');
     }
     setLoading(false, 'refresh');
 }
 
 function updateStatusDisplay(result) {
-    const statusElement = document.getElementById('status');
-    const detailsElement = document.getElementById('statusDetails');
-    const indicatorElement = document.getElementById('statusIndicator');
+    const status = document.getElementById('status');
+    const details = document.getElementById('statusDetails');
+    const indicator = document.getElementById('statusIndicator');
     const section = document.querySelector('.status-section');
-    
+
     const statusMap = {
-        'running': { 
-            text: '🟢 Server Online', 
-            details: result.message || 'Server is running and ready for players!',
-            class: 'status-running'
-        },
-        'stopped': { 
-            text: '🔴 Server Offline', 
-            details: result.message || 'Server is stopped',
-            class: 'status-stopped'
-        },
-        'pending': { 
-            text: '🟡 Starting Up', 
-            details: result.message || 'Server is starting...',
-            class: 'status-pending'
-        },
-        'stopping': { 
-            text: '🟠 Shutting Down', 
-            details: result.message || 'Server is stopping...',
-            class: 'status-stopping'
-        }
+        running: { text: '🟢 Server Online', details: result.message || '', class: 'status-running' },
+        stopped: { text: '🔴 Server Offline', details: result.message || '', class: 'status-stopped' },
+        pending: { text: '🟡 Starting Up', details: result.message || '', class: 'status-pending' },
+        stopping: { text: '🟠 Shutting Down', details: result.message || '', class: 'status-stopping' }
     };
-    
-    const statusInfo = statusMap[result.status] || {
+
+    const info = statusMap[result.status] || {
         text: `❓ ${result.status}`,
-        details: result.message || 'Unknown status',
+        details: result.message || 'Unknown',
         class: 'status-pending'
     };
-    
-    statusElement.textContent = statusInfo.text;
-    detailsElement.textContent = statusInfo.details;
-    
-    // Update visual indicators
-    section.className = `status-section ${statusInfo.class}`;
-    indicatorElement.className = `status-indicator ${statusInfo.class}`;
+
+    status.textContent = info.text;
+    details.textContent = info.details;
+    section.className = `status-section ${info.class}`;
+    indicator.className = `status-indicator ${info.class}`;
 }
 
 function updateMetrics(result) {
-    // Update uptime
-    const uptimeElement = document.getElementById('uptimeValue');
+    const uptimeEl = document.getElementById('uptimeValue');
     if (result.status === 'running' && serverStartTime) {
-        const uptime = Math.floor((new Date() - serverStartTime) / 1000 / 60);
-        uptimeElement.textContent = uptime < 60 ? `${uptime}m` : `${Math.floor(uptime/60)}h ${uptime%60}m`;
+        const uptime = Math.floor((new Date() - serverStartTime) / 60000);
+        uptimeEl.textContent = uptime < 60 ? `${uptime}m` : `${Math.floor(uptime / 60)}h ${uptime % 60}m`;
     } else {
-        uptimeElement.textContent = result.status === 'running' ? 'Unknown' : '--';
+        uptimeEl.textContent = result.status === 'running' ? 'Unknown' : '--';
     }
-    
-    // Update estimated cost (assuming t3.small by default)
-    const costElement = document.getElementById('costValue');
-    const instanceType = result.instance_type || 'm5.xlarge';
-    const hourlyCost = HOURLY_COSTS[instanceType] || HOURLY_COSTS['t3.small'];
-    const dailyCost = (hourlyCost * 24).toFixed(2);
-    costElement.textContent = result.status === 'running' ? `$${dailyCost}` : '$0.00';
-    
-    // Update IP address
-    const ipElement = document.getElementById('ipValue');
-    ipElement.textContent = result.public_ip || '--';
-    
-    // Update last action
-    const lastActionElement = document.getElementById('lastActionValue');
+
+    const costEl = document.getElementById('costValue');
+    const instance = result.instance_type || 'm5.xlarge';
+    const daily = ((HOURLY_COSTS[instance] || HOURLY_COSTS['t3.small']) * 24).toFixed(2);
+    costEl.textContent = result.status === 'running' ? `$${daily}` : '$0.00';
+
+    document.getElementById('ipValue').textContent = result.public_ip || '--';
+
+    const lastActionEl = document.getElementById('lastActionValue');
     if (activityHistory.length > 0) {
-        const lastAction = activityHistory[0];
-        const timeAgo = getTimeAgo(new Date(lastAction.timestamp));
-        lastActionElement.textContent = timeAgo;
+        const last = activityHistory[0];
+        lastActionEl.textContent = getTimeAgo(new Date(last.timestamp));
     }
 }
 
 function addToHistory(action, details) {
-    const historyItem = {
-        action: action,
-        details: details,
-        timestamp: new Date().toISOString()
-    };
-    
-    activityHistory.unshift(historyItem);
-    activityHistory = activityHistory.slice(0, 10); // Keep only last 10 items
-    
+    const entry = { action, details, timestamp: new Date().toISOString() };
+    activityHistory.unshift(entry);
+    activityHistory = activityHistory.slice(0, 10);
     localStorage.setItem('mcServerHistory', JSON.stringify(activityHistory));
     updateHistoryDisplay();
 }
 
 function updateHistoryDisplay() {
-    const historyLog = document.getElementById('historyLog');
-    
+    const log = document.getElementById('historyLog');
     if (activityHistory.length === 0) {
-        historyLog.innerHTML = '<div class="history-item"><span>No activity recorded yet</span><span class="history-time">--</span></div>';
+        log.innerHTML = `<div class="history-item"><span>No activity recorded yet</span><span class="history-time">--</span></div>`;
         return;
     }
-    
-    historyLog.innerHTML = activityHistory.map(item => {
+
+    log.innerHTML = activityHistory.map(item => {
         const timeAgo = getTimeAgo(new Date(item.timestamp));
         return `
             <div class="history-item">
@@ -208,46 +161,35 @@ function updateHistoryDisplay() {
 
 function getTimeAgo(date) {
     const now = new Date();
-    const diffMs = now - date;
-    const diffMins = Math.floor(diffMs / 60000);
-    const diffHours = Math.floor(diffMins / 60);
-    const diffDays = Math.floor(diffHours / 24);
-    
-    if (diffMins < 1) return 'Just now';
-    if (diffMins < 60) return `${diffMins}m ago`;
-    if (diffHours < 24) return `${diffHours}h ago`;
-    return `${diffDays}d ago`;
+    const mins = Math.floor((now - date) / 60000);
+    const hours = Math.floor(mins / 60);
+    const days = Math.floor(hours / 24);
+    if (mins < 1) return 'Just now';
+    if (mins < 60) return `${mins}m ago`;
+    if (hours < 24) return `${hours}h ago`;
+    return `${days}d ago`;
 }
 
 function confirmAction(action) {
     pendingAction = action;
     const modal = document.getElementById('confirmationModal');
     const title = document.getElementById('confirmTitle');
-    const message = document.getElementById('confirmMessage');
+    const msg = document.getElementById('confirmMessage');
     const confirmBtn = document.getElementById('confirmBtn');
-    
+
     if (action === 'start') {
         title.textContent = 'Start Server';
-        message.textContent = 'Are you sure you want to start the Minecraft server? This will begin charging for the instance.';
+        msg.textContent = 'Are you sure you want to start the server?';
         confirmBtn.textContent = '🚀 Start Server';
         confirmBtn.className = 'btn-start';
-    } else if (action === 'stop') {
+    } else {
         title.textContent = 'Stop Server';
-        message.textContent = 'Are you sure you want to stop the server? Any players will be disconnected.';
+        msg.textContent = 'Are you sure you want to stop the server?';
         confirmBtn.textContent = '🛑 Stop Server';
         confirmBtn.className = 'btn-stop';
     }
-    
+
     modal.style.display = 'block';
-    
-    confirmBtn.onclick = function() {
-        closeConfirmation();
-        if (pendingAction === 'start') {
-            startServer();
-        } else if (pendingAction === 'stop') {
-            stopServer();
-        }
-    };
 }
 
 function closeConfirmation() {
@@ -258,68 +200,62 @@ function closeConfirmation() {
 function toggleAutoRefresh() {
     const toggle = document.getElementById('autoRefreshToggle');
     const status = document.getElementById('refreshStatus');
-    
     if (autoRefreshInterval) {
         clearInterval(autoRefreshInterval);
         autoRefreshInterval = null;
         toggle.classList.remove('active');
         status.textContent = 'OFF';
     } else {
-        autoRefreshInterval = setInterval(checkStatus, 30000);
+        autoRefreshInterval = setInterval(checkStatus, 5000);
         toggle.classList.add('active');
-        status.textContent = 'ON (30s)';
+        status.textContent = 'ON (5s)';
     }
 }
 
-function setLoading(loading, buttonType) {
-    const buttons = {
-        'start': document.getElementById('startBtn'),
-        'stop': document.getElementById('stopBtn'),
-        'refresh': document.getElementById('refreshBtn')
+function setLoading(isLoading, type) {
+    const map = {
+        start: document.getElementById('startBtn'),
+        stop: document.getElementById('stopBtn'),
+        refresh: document.getElementById('refreshBtn')
     };
-    
-    if (buttonType && buttons[buttonType]) {
-        const button = buttons[buttonType];
-        button.disabled = loading;
-        
-        if (loading) {
-            button.classList.add('loading');
-            button.innerHTML = '';
-        } else {
-            button.classList.remove('loading');
-            const originalText = {
-                'start': '🚀 Start Server',
-                'stop': '🛑 Stop Server',
-                'refresh': '🔄 Refresh'
-            };
-            button.innerHTML = originalText[buttonType];
-        }
+    const btn = map[type];
+    if (!btn) return;
+
+    btn.disabled = isLoading;
+    if (isLoading) {
+        btn.classList.add('loading');
+        btn.innerHTML = '';
+    } else {
+        btn.classList.remove('loading');
+        btn.innerHTML = {
+            start: '🚀 Start Server',
+            stop: '🛑 Stop Server',
+            refresh: '🔄 Refresh'
+        }[type];
     }
 }
 
-function showMessage(message, type) {
-    const messageElement = document.getElementById('message');
-    messageElement.textContent = message;
-    messageElement.className = `message ${type}`;
-    messageElement.style.display = 'block';
-    
-    setTimeout(() => {
-        messageElement.style.display = 'none';
-    }, 5000);
+function showMessage(msg, type) {
+    const el = document.getElementById('message');
+    el.textContent = msg;
+    el.className = `message ${type}`;
+    el.style.display = 'block';
+    setTimeout(() => el.style.display = 'none', 5000);
 }
 
-// Event listeners
-document.getElementById('autoRefreshToggle').addEventListener('click', toggleAutoRefresh);
-
-// Close modal when clicking outside
-document.getElementById('confirmationModal').addEventListener('click', function(e) {
-    if (e.target === this) {
+// DOM Ready
+document.addEventListener('DOMContentLoaded', () => {
+    document.getElementById('confirmBtn').addEventListener('click', () => {
         closeConfirmation();
-    }
-});
+        if (pendingAction === 'start') startServer();
+        else if (pendingAction === 'stop') stopServer();
+    });
 
-// Initialize
-document.addEventListener('DOMContentLoaded', function() {
+    document.getElementById('autoRefreshToggle').addEventListener('click', toggleAutoRefresh);
+    document.getElementById('confirmationModal').addEventListener('click', e => {
+        if (e.target === e.currentTarget) closeConfirmation();
+    });
+
     updateHistoryDisplay();
     checkStatus();
 });
