@@ -378,3 +378,31 @@ button:disabled {
         grid-template-columns: repeat(2, 1fr);
     }
 }
+
+.join-section {
+    margin-bottom: 2rem;
+    text-align: center;
+}
+
+.join-card {
+    display: inline-block;
+    background: #e9f5ff;
+    border-left: 5px solid #007bff;
+    padding: 1rem 2rem;
+    border-radius: 10px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.join-label {
+    font-weight: bold;
+    color: #0056b3;
+    font-size: 1rem;
+    margin-bottom: 0.3rem;
+}
+
+.join-address {
+    font-size: 1.3rem;
+    font-family: monospace;
+    color: #333;
+}
+
