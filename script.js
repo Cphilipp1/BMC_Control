@@ -7,14 +7,9 @@ let activityHistory = JSON.parse(localStorage.getItem('mcServerHistory') || '[]'
 let pendingAction = null;
 
 const HOURLY_COSTS = {
-    't2.micro': 0.0116,
-    't2.small': 0.023,
-    't2.medium': 0.0464,
-    't3.micro': 0.0104,
-    't3.small': 0.0208,
-    't3.medium': 0.0416,
-    'm5.large': 0.096,
-    'm5.xlarge': 0.192
+    't2.micro': 0.0116, 't2.small': 0.023, 't2.medium': 0.0464,
+    't3.micro': 0.0104, 't3.small': 0.0208, 't3.medium': 0.0416,
+    'm5.large': 0.096, 'm5.xlarge': 0.192
 };
 
 async function makeRequest(action) {
@@ -64,15 +59,13 @@ async function checkStatus() {
     if (result.success) {
         updateStatusDisplay(result);
         updateMetrics(result);
-
         if (result.status === 'running' && lastKnownStatus !== 'running') {
             serverStartTime = new Date();
-            addToHistory('Online', 'Server is now online');
+            addToHistory('Online', 'Server came online');
         } else if (result.status === 'stopped' && lastKnownStatus === 'running') {
             serverStartTime = null;
-            addToHistory('Offline', 'Server stopped');
+            addToHistory('Offline', 'Server went offline');
         }
-
         lastKnownStatus = result.status;
     } else {
         document.getElementById('status').textContent = 'Error';
@@ -206,9 +199,9 @@ function toggleAutoRefresh() {
         toggle.classList.remove('active');
         status.textContent = 'OFF';
     } else {
-        autoRefreshInterval = setInterval(checkStatus, 5000);
+        autoRefreshInterval = setInterval(checkStatus, 30000);
         toggle.classList.add('active');
-        status.textContent = 'ON (5s)';
+        status.textContent = 'ON (30s)';
     }
 }
 
@@ -246,9 +239,9 @@ function showMessage(msg, type) {
 // DOM Ready
 document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('confirmBtn').addEventListener('click', () => {
-        closeConfirmation();
         if (pendingAction === 'start') startServer();
         else if (pendingAction === 'stop') stopServer();
+        closeConfirmation();
     });
 
     document.getElementById('autoRefreshToggle').addEventListener('click', toggleAutoRefresh);
