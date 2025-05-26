@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Minecraft Server Controller</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>🎮 Minecraft Server Control</h1>
+        
+        <div class="status-section">
+            <h2>Server Status</h2>
+            <div id="status" class="status-display">Checking...</div>
+            <button onclick="checkStatus()">Refresh Status</button>
+        </div>
+        
+        <div class="control-section">
+            <button id="startBtn" onclick="startServer()" class="btn-start">Start Server</button>
+            <button id="stopBtn" onclick="stopServer()" class="btn-stop">Stop Server</button>
+        </div>
+        
+        <div id="message" class="message"></div>
+    </div>
+    
+    <script src="script.js"></script>
+</body>
+</html>
