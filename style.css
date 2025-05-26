@@ -1,0 +1,87 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Arial', sans-serif;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.container {
+    background: white;
+    padding: 2rem;
+    border-radius: 15px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    text-align: center;
+    max-width: 400px;
+    width: 90%;
+}
+
+h1 {
+    color: #333;
+    margin-bottom: 2rem;
+}
+
+.status-section {
+    margin-bottom: 2rem;
+}
+
+.status-display {
+    padding: 1rem;
+    margin: 1rem 0;
+    border-radius: 8px;
+    font-weight: bold;
+    font-size: 1.2rem;
+}
+
+.status-running { background-color: #d4edda; color: #155724; }
+.status-stopped { background-color: #f8d7da; color: #721c24; }
+.status-pending { background-color: #fff3cd; color: #856404; }
+
+button {
+    padding: 12px 24px;
+    margin: 0.5rem;
+    border: none;
+    border-radius: 8px;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.btn-start {
+    background-color: #28a745;
+    color: white;
+}
+
+.btn-start:hover {
+    background-color: #218838;
+}
+
+.btn-stop {
+    background-color: #dc3545;
+    color: white;
+}
+
+.btn-stop:hover {
+    background-color: #c82333;
+}
+
+button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.message {
+    margin-top: 1rem;
+    padding: 0.5rem;
+    border-radius: 5px;
+}
+
+.success { background-color: #d4edda; color: #155724; }
+.error { background-color: #f8d7da; color: #721c24; }
