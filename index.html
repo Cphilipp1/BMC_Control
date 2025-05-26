@@ -3,27 +3,94 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Minecraft Server Controller</title>
+    <title>🎮 Minecraft Server Control Panel</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <div class="container">
-        <h1>🎮 Minecraft Server Control</h1>
-        
-        <div class="status-section">
-            <h2>Server Status</h2>
-            <div id="status" class="status-display">Checking...</div>
-            <button onclick="checkStatus()">Refresh Status</button>
+        <div class="header">
+            <h1>🎮 Minecraft Server</h1>
+            <div class="subtitle">Control Panel</div>
         </div>
         
-        <div class="control-section">
-            <button id="startBtn" onclick="startServer()" class="btn-start">Start Server</button>
-            <button id="stopBtn" onclick="stopServer()" class="btn-stop">Stop Server</button>
+        <div class="content">
+            <div class="status-section">
+                <div class="auto-refresh-toggle">
+                    <span>Auto-refresh:</span>
+                    <div class="toggle-switch" id="autoRefreshToggle">
+                        <div class="toggle-slider"></div>
+                    </div>
+                    <span id="refreshStatus">OFF</span>
+                </div>
+                
+                <div class="status-display">
+                    <div class="status-info">
+                        <div id="status" class="status-text">Checking...</div>
+                        <div id="statusDetails" class="status-details">Loading server information...</div>
+                    </div>
+                    <div id="statusIndicator" class="status-indicator"></div>
+                </div>
+            </div>
+
+            <div class="metrics-grid">
+                <div class="metric-card">
+                    <div id="uptimeValue" class="metric-value">--</div>
+                    <div class="metric-label">Uptime</div>
+                </div>
+                <div class="metric-card">
+                    <div id="costValue" class="metric-value">--</div>
+                    <div class="metric-label">Est. Daily Cost</div>
+                </div>
+                <div class="metric-card">
+                    <div id="ipValue" class="metric-value">--</div>
+                    <div class="metric-label">Public IP</div>
+                </div>
+                <div class="metric-card">
+                    <div id="lastActionValue" class="metric-value">--</div>
+                    <div class="metric-label">Last Action</div>
+                </div>
+            </div>
+
+            <div class="control-section">
+                <div class="control-buttons">
+                    <button id="startBtn" onclick="confirmAction('start')" class="btn-start">
+                        🚀 Start Server
+                    </button>
+                    <button id="stopBtn" onclick="confirmAction('stop')" class="btn-stop">
+                        🛑 Stop Server
+                    </button>
+                    <button id="refreshBtn" onclick="checkStatus()" class="btn-refresh">
+                        🔄 Refresh
+                    </button>
+                </div>
+            </div>
+
+            <div class="history-section">
+                <div class="history-title">📊 Activity History</div>
+                <div class="history-log" id="historyLog">
+                    <div class="history-item">
+                        <span>No activity recorded yet</span>
+                        <span class="history-time">--</span>
+                    </div>
+                </div>
+            </div>
+
+            <div id="message" class="message" style="display: none;"></div>
         </div>
-        
-        <div id="message" class="message"></div>
     </div>
-    
+
+    <!-- Confirmation Modal -->
+    <div id="confirmationModal" class="confirmation-modal">
+        <div class="modal-content">
+            <h3 id="confirmTitle">Confirm Action</h3>
+            <p id="confirmMessage">Are you sure you want to perform this action?</p>
+            <div class="modal-buttons">
+                <button id="confirmBtn" class="btn-confirm">Confirm</button>
+                <button onclick="closeConfirmation()" class="btn-cancel">Cancel</button>
+            </div>
+        </div>
+    </div>
+
     <script src="script.js"></script>
 </body>
 </html>
